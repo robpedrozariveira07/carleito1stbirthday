@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Primer Cumple de Carleito</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Baloo+2:wght@500;700;800&display=swap">
+<style>
+/* Layout: one screen. Gift box centered on a crayon sky; on open it gives way to a toy "now playing" card whose lyrics are the letter. Single deliberate light look. */
+:root{
+  --sky:#8ec9ee; --sky-deep:#5aa6dc; --paper:#fffaf0; --ink:#2b2a4a;
+  --crayon-red:#e8483f; --crayon-yellow:#ffd23f; --grass:#5cb85c; --leaf:#2f7d4f;
+  --font-hand:"Gochi Hand","Comic Sans MS",cursive;
+  --font-round:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{
+  margin:0;background:var(--sky);color:var(--ink);font-family:var(--font-round);
+  background-image:
+    radial-gradient(60px 34px at 12% 14%,#fff 60%,transparent 62%),
+    radial-gradient(48px 28px at 18% 11%,#fff 60%,transparent 62%),
+    radial-gradient(70px 36px at 86% 22%,#fff 60%,transparent 62%),
+    radial-gradient(44px 26px at 79% 19%,#fff 60%,transparent 62%),
+    linear-gradient(var(--sky-deep),var(--sky) 55%,#bfe3f7);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+.wrap{
+  min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding-block:24px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+
+/* ---------- Gift ---------- */
+#giftScene{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.tag{font-family:var(--font-hand);font-size:clamp(28px,7vw,44px);color:#fff;text-shadow:2px 3px 0 var(--sky-deep);margin:0;text-wrap:balance;line-height:1.1}
+.gift{position:relative;width:220px;height:210px;cursor:pointer;border:0;background:none;padding:0;animation:wiggle 2.4s ease-in-out infinite}
+.gift:focus-visible{outline:4px dashed #fff;outline-offset:10px;border-radius:12px}
+.box{position:absolute;left:10px;right:10px;bottom:0;height:140px;background:var(--crayon-red);border-radius:6px;
+  background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.12) 0 3px,transparent 3px 9px);box-shadow:inset 0 -10px 0 rgba(0,0,0,.08)}
+.box::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:30px;transform:translateX(-50%);background:var(--crayon-yellow)}
+.lid{position:absolute;left:0;right:0;top:40px;height:44px;background:var(--crayon-red);border-radius:6px;z-index:2;
+  background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.14) 0 3px,transparent 3px 9px);transition:transform .9s cubic-bezier(.3,1.4,.5,1),opacity .9s}
+.lid::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:30px;transform:translateX(-50%);background:var(--crayon-yellow)}
+.bow{position:absolute;left:50%;top:-34px;width:110px;height:44px;transform:translateX(-50%)}
+.bow span{position:absolute;top:0;width:52px;height:40px;border:9px solid var(--crayon-yellow);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;box-sizing:border-box}
+.bow span:first-child{left:0;transform:rotate(-18deg)}.bow span:last-child{right:0;transform:rotate(18deg)}
+.bow i{position:absolute;left:50%;top:14px;width:20px;height:20px;transform:translateX(-50%);background:var(--crayon-yellow);border-radius:50%}
+.gift.open{animation:none}
+.gift.open .lid{transform:translate(40px,-260px) rotate(38deg);opacity:0}
+.hint{font-family:var(--font-hand);font-size:22px;color:var(--ink);background:var(--paper);padding:6px 16px;border-radius:30px 26px 32px 24px;box-shadow:3px 4px 0 rgba(43,42,74,.18)}
+@keyframes wiggle{0%,80%,100%{transform:rotate(0)}84%{transform:rotate(-5deg)}88%{transform:rotate(5deg)}92%{transform:rotate(-3deg)}96%{transform:rotate(2deg)}}
+
+/* ---------- Player ---------- */
+#player{width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;animation:rise .8s ease-out both}
+@keyframes rise{from{transform:translateY(30px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.now{font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:#fff;font-weight:700;text-shadow:0 1px 0 var(--sky-deep)}
+.cover{width:100%;aspect-ratio:1;max-width:100%;border-radius:10px;background:var(--paper);box-shadow:0 14px 30px rgba(30,60,110,.28);overflow:hidden;transform:rotate(-1.2deg)}
+.cover svg{display:block;width:100%;height:100%}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.meta div{min-width:0}
+.title{font-size:clamp(24px,6.4vw,30px);font-weight:800;margin:0;line-height:1.1;color:#fff;text-shadow:0 2px 0 var(--sky-deep);text-wrap:balance}
+.artist{margin:2px 0 0;font-size:17px;font-weight:600;color:#1e3f66}
+.heart{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--paper);color:var(--crayon-red);font-size:22px;cursor:pointer;box-shadow:2px 3px 0 rgba(43,42,74,.18)}
+.heart:focus-visible,.ctrl:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.bar{height:6px;border-radius:6px;background:rgba(255,255,255,.5);overflow:hidden}
+.bar b{display:block;height:100%;width:0;background:#fff;border-radius:6px}
+.times{display:flex;justify-content:space-between;font-size:13px;color:#1e3f66;font-variant-numeric:tabular-nums;margin-top:4px}
+.controls{display:flex;align-items:center;justify-content:center;gap:28px}
+.ctrl{border:0;cursor:pointer;background:none;color:#fff;font-size:26px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+.ctrl.main{width:72px;height:72px;background:#fff;color:var(--ink);font-size:28px;box-shadow:0 6px 14px rgba(30,60,110,.25)}
+.ctrl svg{width:26px;height:26px;fill:currentColor}
+.ctrl.main svg{width:30px;height:30px}
+
+.lyrics{background:var(--grass);border-radius:16px;padding:18px 18px 22px;color:#fff;
+  background-image:repeating-linear-gradient(100deg,rgba(255,255,255,.07) 0 2px,transparent 2px 8px)}
+.lyrics h2{margin:0 0 10px;font-size:18px;font-weight:800}
+.lines{max-height:300px;overflow-y:auto;scroll-behavior:smooth;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+.lines p{margin:0;font-size:clamp(19px,5vw,22px);font-weight:700;line-height:1.3;color:rgba(255,255,255,.5);transition:color .4s,transform .4s;cursor:pointer;text-wrap:pretty}
+.lines p.done{color:rgba(255,255,255,.82)}
+.lines p.on{color:#fff;transform:translateX(4px)}
+.lines p.sign{font-family:var(--font-hand);font-size:clamp(24px,6vw,28px);font-weight:400}
+.lines p.salute{font-family:var(--font-hand);font-weight:400;font-size:20px}
+.foot{text-align:center;font-family:var(--font-hand);font-size:20px;color:#fff;text-shadow:0 1px 0 var(--sky-deep)}
+
+/* ---------- English letter ---------- */
+.english{background:var(--paper);color:var(--ink);background-image:none;box-shadow:3px 4px 0 rgba(43,42,74,.15)}
+.english h2{color:var(--leaf)}
+.english p{margin:0 0 10px;font-size:17px;line-height:1.5;max-width:65ch}
+.english .salute,.english .sign{font-family:var(--font-hand);font-size:22px}
+.english .sign{margin:6px 0 0}
+
+/* ---------- Animal parade ---------- */
+body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))}
+.walker{pointer-events:auto;cursor:pointer}
+.say{position:absolute;left:50%;bottom:100%;transform:translate(-50%,8px) scale(.4);opacity:0;background:var(--paper);color:var(--crayon-red);
+  font-family:var(--font-hand);font-size:21px;white-space:nowrap;padding:3px 12px;border-radius:18px 20px 16px 22px;box-shadow:2px 3px 0 rgba(43,42,74,.2);
+  transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .2s}
+.say::after{content:"";position:absolute;left:50%;top:100%;border:7px solid transparent;border-top-color:var(--paper);transform:translateX(-50%)}
+.say.show{opacity:1;transform:translate(-50%,-2px) scale(1)}
+.walker.tapped svg{animation:boing .6s}
+@keyframes boing{30%{transform:translateY(-28px) rotate(-10deg)}60%{transform:translateY(0) scale(1.12,.88)}}
+.songs{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.songs span{font-size:14px;font-weight:700;color:#1e3f66}
+.songs div{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.songs a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:700;font-size:16px;color:var(--ink);
+  background:var(--paper);padding:8px 16px;border-radius:26px 22px 28px 20px;box-shadow:2px 3px 0 rgba(43,42,74,.18)}
+.songs a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#parade{position:fixed;left:0;right:0;bottom:0;height:calc(150px + env(safe-area-inset-bottom,0px));pointer-events:none;z-index:20;overflow:hidden}
+#parade::before{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(28px + env(safe-area-inset-bottom,0px));background:var(--grass);
+  border-radius:50% 50% 0 0/22px 22px 0 0;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,.1) 0 2px,transparent 2px 9px)}
+.walker{position:absolute;left:100%;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:88px;height:88px;animation:walk 26s linear infinite}
+.walker svg{width:100%;height:100%;overflow:visible}
+.walker:nth-child(2){animation-delay:-5.2s}.walker:nth-child(3){animation-delay:-10.4s}
+.walker:nth-child(4){animation-delay:-15.6s}.walker:nth-child(5){animation-delay:-20.8s}
+@keyframes walk{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 110px))}}
+.bob{animation:bob .45s ease-in-out infinite alternate}
+.hop{animation:hop .6s cubic-bezier(.3,0,.6,1) infinite alternate}
+.beat,.flap,.trunk,.wave{transform-box:fill-box}
+.beat{transform-origin:100% 100%;animation:beat .22s ease-in-out infinite alternate}
+.beat.r{transform-origin:0 100%;animation-delay:.11s}
+.flap{transform-origin:20% 50%;animation:flap .3s ease-in-out infinite alternate}
+.trunk{transform-origin:100% 0;animation:trunk .8s ease-in-out infinite alternate}
+.wave{transform-origin:50% 100%;animation:sway 1s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-4px)}}
+@keyframes hop{to{transform:translateY(-16px)}}
+@keyframes beat{from{transform:rotate(-14deg)}to{transform:rotate(10deg)}}
+@keyframes flap{to{transform:rotate(-24deg)}}
+@keyframes trunk{to{transform:rotate(-28deg)}}
+@keyframes sway{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  .walker,.bob,.hop,.beat,.flap,.trunk,.wave{animation:none}
+  .walker{left:auto}.walker:nth-child(1){left:2%}.walker:nth-child(2){left:22%}.walker:nth-child(3){left:42%}.walker:nth-child(4){left:62%}.walker:nth-child(5){left:80%}
+  .gift{animation:none}.lid{transition:opacity .3s}#player{animation:none}.lines{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div id="parade" aria-hidden="true" hidden>
+  <!-- osito con tambor -->
+  <div class="walker"><span class="say"></span><svg viewBox="0 0 100 100"><g class="bob">
+    <circle cx="34" cy="20" r="8" fill="#a8693f"/><circle cx="66" cy="20" r="8" fill="#a8693f"/>
+    <ellipse cx="50" cy="70" rx="21" ry="20" fill="#c8895a"/>
+    <circle cx="50" cy="34" r="19" fill="#c8895a"/>
+    <ellipse cx="50" cy="40" rx="9" ry="6" fill="#f1d1b0"/><circle cx="50" cy="37" r="3" fill="#2b2a4a"/>
+    <circle cx="43" cy="30" r="2.5" fill="#2b2a4a"/><circle cx="57" cy="30" r="2.5" fill="#2b2a4a"/>
+    <ellipse cx="40" cy="91" rx="8" ry="4" fill="#a8693f"/><ellipse cx="60" cy="91" rx="8" ry="4" fill="#a8693f"/>
+    <rect x="33" y="66" width="34" height="20" rx="4" fill="#e8483f"/>
+    <path d="M33 70 l8 12 l8 -12 l8 12 l8 -12" stroke="#ffd23f" stroke-width="2" fill="none"/>
+    <ellipse cx="50" cy="66" rx="17" ry="4" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1"/>
+    <line class="beat" x1="30" y1="52" x2="44" y2="64" stroke="#2b2a4a" stroke-width="3" stroke-linecap="round"/>
+    <line class="beat r" x1="70" y1="52" x2="56" y2="64" stroke="#2b2a4a" stroke-width="3" stroke-linecap="round"/>
+  </g></svg></div>
+  <!-- patito con globo -->
+  <div class="walker"><span class="say"></span><svg viewBox="0 0 100 100"><g class="bob">
+    <g class="wave"><path d="M70 34 q-6 14 -14 26" stroke="#2b2a4a" stroke-width="1.5" fill="none"/>
+    <ellipse cx="72" cy="18" rx="12" ry="15" fill="#7b6cf6"/><path d="M68 33 l4 -3 l4 3z" fill="#7b6cf6"/></g>
+    <ellipse cx="50" cy="72" rx="24" ry="16" fill="#ffd23f"/>
+    <circle cx="36" cy="48" r="13" fill="#ffd23f"/>
+    <path d="M24 47 l-11 3 l11 5z" fill="#ff9a52"/><circle cx="33" cy="45" r="2.5" fill="#2b2a4a"/>
+    <ellipse class="flap" cx="56" cy="68" rx="13" ry="7" fill="#f4b400"/>
+    <path d="M40 87 l-4 6 h9z M56 87 l-4 6 h9z" fill="#ff9a52"/>
+  </g></svg></div>
+  <!-- elefante con gorro de fiesta -->
+  <div class="walker"><span class="say"></span><svg viewBox="0 0 100 100"><g class="bob">
+    <rect x="40" y="76" width="9" height="16" rx="3" fill="#94a3ba"/><rect x="62" y="76" width="9" height="16" rx="3" fill="#94a3ba"/>
+    <ellipse cx="56" cy="66" rx="27" ry="20" fill="#a6b4c8"/>
+    <circle cx="34" cy="52" r="16" fill="#a6b4c8"/>
+    <ellipse cx="45" cy="50" rx="10" ry="13" fill="#8c9bb2"/>
+    <path class="trunk" d="M22 56 q-9 10 -3 22" stroke="#a6b4c8" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <circle cx="29" cy="48" r="2.5" fill="#2b2a4a"/>
+    <path d="M27 38 l14 0 l-6 -20z" fill="#e8483f"/><circle cx="35" cy="17" r="3.5" fill="#ffd23f"/>
+    <path d="M30 34 l8 -4 M32 28 l5 -3" stroke="#ffd23f" stroke-width="2"/>
+  </g></svg></div>
+  <!-- conejita bailando -->
+  <div class="walker"><span class="say"></span><svg viewBox="0 0 100 100"><g class="hop">
+    <ellipse cx="42" cy="16" rx="5" ry="15" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5" transform="rotate(-12 42 16)"/>
+    <ellipse cx="58" cy="16" rx="5" ry="15" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5" transform="rotate(12 58 16)"/>
+    <ellipse cx="50" cy="68" rx="16" ry="18" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5"/>
+    <circle cx="50" cy="38" r="14" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5"/>
+    <circle cx="45" cy="36" r="2.2" fill="#2b2a4a"/><circle cx="55" cy="36" r="2.2" fill="#2b2a4a"/>
+    <circle cx="50" cy="41" r="2" fill="#ff9ac0"/>
+    <g class="wave"><path d="M36 60 l-12 -14 M64 60 l12 -14" stroke="#2b2a4a" stroke-width="2.5" stroke-linecap="round"/></g>
+    <ellipse cx="42" cy="88" rx="7" ry="4" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5"/>
+    <ellipse cx="58" cy="88" rx="7" ry="4" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5"/>
+  </g></svg></div>
+  <!-- caracol con pastel -->
+  <div class="walker"><span class="say"></span><svg viewBox="0 0 100 100"><g class="bob">
+    <path d="M14 84 q34 6 70 0 l0 6 q-36 6 -74 -2 q-4 -16 6 -24 z" fill="#9be08a"/>
+    <circle cx="20" cy="66" r="9" fill="#9be08a"/><circle cx="17" cy="64" r="2" fill="#2b2a4a"/>
+    <path d="M18 58 l-4 -12 M23 58 l2 -12" stroke="#2b2a4a" stroke-width="2"/><circle cx="14" cy="45" r="2.5" fill="#2b2a4a"/><circle cx="25" cy="45" r="2.5" fill="#2b2a4a"/>
+    <circle cx="56" cy="64" r="22" fill="#ff9ac0"/>
+    <path d="M56 64 m-4 0 a4 4 0 1 1 8 0 a8 8 0 1 1 -16 0 a12 12 0 1 1 24 0" stroke="#e86b9a" stroke-width="2.5" fill="none"/>
+    <rect x="44" y="34" width="24" height="10" rx="3" fill="#fffaf0"/>
+    <rect x="53" y="22" width="6" height="12" fill="#7b6cf6"/>
+    <path class="wave" d="M56 12 q6 6 0 10 q-6 -4 0 -10z" fill="#ffb703"/>
+  </g></svg></div>
+</div>
+
+<div class="wrap">
+  <section id="giftScene">
+    <h1 class="tag">¡Llegó un regalo para Carleito!</h1>
+    <button class="gift" id="gift" aria-label="Abrir el regalo">
+      <div class="lid"><div class="bow"><span></span><span></span><i></i></div></div>
+      <div class="box"></div>
+    </button>
+    <div class="hint">Toca el regalo para abrirlo 🎁</div>
+  </section>
+
+  <section id="player" hidden>
+    <div class="now">Sonando para Carleito · Primer cumpleaños</div>
+
+    <div class="cover" aria-hidden="true">
+      <svg viewBox="0 0 400 400">
+        <defs>
+          <filter id="crayon" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="6"/>
+          </filter>
+          <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="#fff" stroke-width="2" opacity=".35"/>
+          </pattern>
+        </defs>
+        <rect width="400" height="400" fill="#fffaf0"/>
+        <g filter="url(#crayon)">
+          <rect x="14" y="14" width="372" height="372" fill="#b9e1f7"/>
+          <rect x="14" y="14" width="372" height="372" fill="url(#hatch)"/>
+          <!-- sun -->
+          <circle cx="78" cy="78" r="34" fill="#ffd23f"/>
+          <g stroke="#ffb703" stroke-width="5" stroke-linecap="round">
+            <line x1="78" y1="22" x2="78" y2="34"/><line x1="78" y1="122" x2="78" y2="134"/>
+            <line x1="22" y1="78" x2="34" y2="78"/><line x1="122" y1="78" x2="134" y2="78"/>
+            <line x1="38" y1="38" x2="47" y2="47"/><line x1="109" y1="109" x2="118" y2="118"/>
+            <line x1="118" y1="38" x2="109" y2="47"/><line x1="38" y1="118" x2="47" y2="109"/>
+          </g>
+          <path d="M64 82 q14 12 28 0" stroke="#e8483f" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="68" cy="70" r="3.5" fill="#2b2a4a"/><circle cx="88" cy="70" r="3.5" fill="#2b2a4a"/>
+          <!-- clouds -->
+          <g fill="#fff">
+            <ellipse cx="250" cy="70" rx="40" ry="18"/><ellipse cx="280" cy="60" rx="28" ry="18"/><ellipse cx="225" cy="64" rx="22" ry="14"/>
+            <ellipse cx="170" cy="140" rx="28" ry="12"/><ellipse cx="190" cy="132" rx="18" ry="12"/>
+          </g>
+          <!-- balloon with 1 -->
+          <path d="M318 214 q-6 40 4 70" stroke="#2b2a4a" stroke-width="2.5" fill="none"/>
+          <ellipse cx="318" cy="160" rx="42" ry="52" fill="#e8483f"/>
+          <path d="M310 212 l8 -6 l8 6 z" fill="#e8483f"/>
+          <text x="318" y="182" text-anchor="middle" font-family="Gochi Hand, cursive" font-size="64" fill="#fffaf0">1</text>
+          <!-- small balloons -->
+          <path d="M262 236 q4 30 -2 52" stroke="#2b2a4a" stroke-width="2" fill="none"/>
+          <ellipse cx="262" cy="212" rx="20" ry="25" fill="#ffd23f"/>
+          <path d="M360 250 q-4 22 2 40" stroke="#2b2a4a" stroke-width="2" fill="none"/>
+          <ellipse cx="360" cy="230" rx="16" ry="21" fill="#7b6cf6"/>
+          <!-- hills -->
+          <path d="M14 300 q90 -60 190 -10 t182 -20 V386 H14 Z" fill="#5cb85c"/>
+          <path d="M14 330 q110 -40 220 0 t152 -10 V386 H14 Z" fill="#2f7d4f" opacity=".55"/>
+          <!-- cake -->
+          <rect x="70" y="262" width="110" height="56" rx="6" fill="#ffb3c7"/>
+          <rect x="70" y="262" width="110" height="16" rx="6" fill="#fffaf0"/>
+          <path d="M70 278 q14 12 27 0 q14 12 28 0 q14 12 28 0 q14 12 27 0" fill="#fffaf0"/>
+          <rect x="120" y="226" width="10" height="36" fill="#7b6cf6"/>
+          <path d="M125 206 q10 12 0 20 q-10 -8 0 -20z" fill="#ffb703"/>
+          <!-- flowers -->
+          <g fill="#ffd23f"><circle cx="230" cy="338" r="6"/><circle cx="260" cy="350" r="6"/><circle cx="40" cy="352" r="6"/></g>
+          <g fill="#e8483f"><circle cx="300" cy="344" r="6"/><circle cx="210" cy="356" r="5"/></g>
+        </g>
+        <text x="200" y="376" text-anchor="middle" font-family="Gochi Hand, cursive" font-size="22" fill="#fffaf0">feliz primer cumple</text>
+      </svg>
+    </div>
+
+    <div class="meta">
+      <div>
+        <p class="title">Feliz cumple, Carleito</p>
+        <p class="artist">Tío Bob y Tía Vivi</p>
+      </div>
+      <button class="heart" id="heart" aria-label="Mandar corazones">♥</button>
+    </div>
+
+    <div>
+      <div class="bar"><b id="fill"></b></div>
+      <div class="times"><span id="tNow">0:00</span><span id="tLeft">-0:00</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl" id="restart" aria-label="Volver a empezar">
+        <svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>
+      </button>
+      <button class="ctrl main" id="play" aria-label="Pausar">
+        <svg viewBox="0 0 24 24" id="playIcon"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+      </button>
+      <button class="ctrl" id="sound" aria-label="Silenciar música">
+        <svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9h4l5-4v14l-5-4H4zM16 8a5 5 0 0 1 0 8M18.5 5.5a8.5 8.5 0 0 1 0 13" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4 9h4l5-4v14l-5-4H4z"/></svg>
+      </button>
+    </div>
+
+    <div class="lyrics">
+      <h2>Carta</h2>
+      <div class="lines" id="lines"></div>
+    </div>
+
+    <div class="foot">Toca a los animalitos para que saluden a Carleito 👇</div>
+
+    <div class="lyrics english" lang="en">
+      <h2>Letter in English</h2>
+      <p class="salute">Carleito peshosho,</p>
+      <p>Just one year ago you came into our lives, and time has flown by.</p>
+      <p>You made us cry from the very beginning: when your mom and dad, who are our friends, our siblings and so much more, told us you were on your way. And you made us cry again the day you were born, when your first pictures reached us.</p>
+      <p>We couldn't wait to meet you, and finally the day came. You're a baby with incredible energy. You made us so happy this summer, and we enjoyed every second with you.</p>
+      <p>Even though we're far away, we want you to know that we love you so, so much. We'll always be here for you, the happiest uncle and aunt in the world.</p>
+      <p>We send you big hugs and we miss you so much, and your mom and dad too. You're an amazing little baby who fills us with light and happiness.</p>
+      <p>Enjoy your first birthday to the fullest. We hope to see you very, very soon.</p>
+      <p><strong>Happy, happy birthday, Carleito!</strong></p>
+      <p class="sign">With love, Uncle Bob and Aunt Vivi</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const LETTER = [
+  ["Carleito peshosho:", "salute"],
+  ["Hace apenas un año llegaste a nuestras vidas, y qué rápido se ha pasado el tiempo."],
+  ["Nos hiciste llorar desde el principio: cuando tus papás, que son nuestros amigos, nuestros hermanos y mucho más que eso, nos contaron que venías en camino."],
+  ["Y nos hiciste llorar otra vez el día que naciste, cuando nos llegaron tus primeras fotos."],
+  ["Teníamos muchísimas ganas de conocerte, y por fin llegó el día."],
+  ["Eres un bebé con una energía increíble. Nos hiciste muy felices este verano y te disfrutamos como locos."],
+  ["Aunque estemos lejos, queremos que sepas que te amamos muchísimo."],
+  ["Siempre vamos a estar aquí para ti, como los tíos más felices del mundo."],
+  ["Te abrazamos y te extrañamos muchísimo, y a tus papis también."],
+  ["Eres un bebito increíble que nos llena de luz y de felicidad."],
+  ["Disfruta muchísimo tu primer cumpleaños. Esperamos verte muy, muy pronto."],
+  ["¡Feliz, feliz cumpleaños, Carleito!"],
+  ["Con amor, Tío Bob y Tía Vivi", "sign"]
+];
+
+const linesEl = document.getElementById('lines');
+const durs = LETTER.map(([t]) => Math.max(3.4, t.length * 0.075));
+const starts = []; let acc = 0;
+durs.forEach(d => { starts.push(acc); acc += d; });
+const TOTAL = acc + 2;
+LETTER.forEach(([t, cls], i) => {
+  const p = document.createElement('p'); p.textContent = t; if (cls) p.className = cls;
+  p.addEventListener('click', () => { elapsed = starts[i]; render(true); });
+  linesEl.appendChild(p);
+});
+const ps = [...linesEl.children];
+
+let elapsed = 0, playing = false, last = 0, current = -1, finished = false;
+const fmt = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); };
+
+function render(force){
+  document.getElementById('fill').style.width = Math.min(100, elapsed/TOTAL*100) + '%';
+  document.getElementById('tNow').textContent = fmt(elapsed);
+  document.getElementById('tLeft').textContent = '-' + fmt(TOTAL - elapsed);
+  let idx = -1; starts.forEach((s,i) => { if (elapsed >= s) idx = i; });
+  if (idx !== current || force){
+    current = idx;
+    ps.forEach((p,i) => { p.classList.toggle('on', i === idx); p.classList.toggle('done', i < idx); });
+    if (ps[idx]) linesEl.scrollTop = ps[idx].offsetTop - linesEl.offsetTop - 60;
+  }
+}
+function tick(t){
+  if (!playing) return;
+  if (last) elapsed += (t - last) / 1000;
+  last = t;
+  if (elapsed >= TOTAL){ elapsed = TOTAL; render(); setPlaying(false); if(!finished){ finished = true; burst(); } return; }
+  render();
+  requestAnimationFrame(tick);
+}
+function setPlaying(v){
+  playing = v; last = 0;
+  document.getElementById('playIcon').innerHTML = v
+    ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+  document.getElementById('play').setAttribute('aria-label', v ? 'Pausar' : 'Reproducir');
+  if (v){ if (elapsed >= TOTAL){ elapsed = 0; finished = false; } requestAnimationFrame(tick); startMusic(); }
+  else stopMusic();
+}
+
+/* ---------- Music box: Happy Birthday (public domain) ---------- */
+let ctx = null, muted = false, musicTimer = null, master = null;
+const N = {A4:440,B4:493.88,C5:523.25,D5:587.33,E5:659.25,F5:698.46,G4:392,G5:783.99};
+const TUNE = [["G4",.75],["G4",.25],["A4",1],["G4",1],["C5",1],["B4",2],
+  ["G4",.75],["G4",.25],["A4",1],["G4",1],["D5",1],["C5",2],
+  ["G4",.75],["G4",.25],["G5",1],["E5",1],["C5",1],["B4",1],["A4",2],
+  ["F5",.75],["F5",.25],["E5",1],["C5",1],["D5",1],["C5",2],[null,3]];
+const BEAT = 0.46;
+let loopGain = null;
+function ensureCtx(){
+  if (!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); master = ctx.createGain(); master.connect(ctx.destination); }
+  master.gain.value = muted ? 0 : .7;
+  if (ctx.state !== 'running') ctx.resume();
+}
+function chime(f, at, dest){
+  [[1,.22],[2,.06],[3,.025]].forEach(([m,g]) => {
+    const o = ctx.createOscillator(), a = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f*m;
+    a.gain.setValueAtTime(0, at); a.gain.linearRampToValueAtTime(g, at+.01);
+    a.gain.exponentialRampToValueAtTime(.0001, at + 1.6/m);
+    o.connect(a).connect(dest); o.start(at); o.stop(at + 1.7);
+  });
+}
+function scheduleTune(){
+  if (!ctx || !playing) return;
+  loopGain = ctx.createGain(); loopGain.connect(master);
+  const lg = loopGain;
+  let t = ctx.currentTime + .05, len = 0;
+  TUNE.forEach(([n,b]) => { if (n) chime(N[n], t, lg); t += b*BEAT; len += b*BEAT; });
+  musicTimer = setTimeout(scheduleTune, len*1000 - 60);
+}
+function fadeLoop(){ try{ if (loopGain && ctx) loopGain.gain.setTargetAtTime(0, ctx.currentTime, .04); }catch(e){} }
+function startMusic(){
+  try{ ensureCtx(); clearTimeout(musicTimer); fadeLoop(); scheduleTune(); }catch(e){}
+}
+function stopMusic(){ clearTimeout(musicTimer); fadeLoop(); }
+
+/* ---------- Animalitos que hablan ---------- */
+const PHRASES = ['¡Carleito!','¡Hola, Carleito!','¡Feliz cumple!','¡Un añito!','¡Te queremos!','¡Bravo, Carleito!'];
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function speak(text){
+  try{
+    if (muted || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text.replace(/[¡!]/g,''));
+    u.lang = 'es-MX'; u.pitch = 1.8; u.rate = .9;
+    const v = speechSynthesis.getVoices().find(v => (v.lang||'').toLowerCase().startsWith('es'));
+    if (v) u.voice = v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+function boing(){
+  try{
+    ensureCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(280, t); o.frequency.exponentialRampToValueAtTime(900, t+.14); o.frequency.exponentialRampToValueAtTime(480, t+.3);
+    g.gain.setValueAtTime(.35, t); g.gain.exponentialRampToValueAtTime(.001, t+.36);
+    o.connect(g).connect(master); o.start(t); o.stop(t+.4);
+  }catch(e){}
+}
+function say(w, text, voice){
+  const b = w.querySelector('.say');
+  b.textContent = text; b.classList.add('show');
+  clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('show'), 1900);
+  if (voice) speak(text);
+}
+const walkers = [...document.querySelectorAll('.walker')];
+walkers.forEach(w => w.addEventListener('click', () => {
+  w.classList.remove('tapped'); void w.offsetWidth; w.classList.add('tapped');
+  boing(); say(w, Math.random() < .6 ? '¡Hola, Carleito!' : pick(PHRASES), true);
+}));
+setInterval(() => {
+  if (document.getElementById('parade').hidden) return;
+  const vis = walkers.filter(w => { const r = w.getBoundingClientRect(); return r.left > 8 && r.right < innerWidth - 8; });
+  if (vis.length) say(pick(vis), pick(PHRASES), false);
+}, 2300);
+
+document.getElementById('sound').addEventListener('click', () => {
+  muted = !muted; if (master) master.gain.value = muted ? 0 : .7;
+  try{ if (muted) speechSynthesis.cancel(); }catch(e){}
+  document.getElementById('sound').style.opacity = muted ? .45 : 1;
+  document.getElementById('sound').setAttribute('aria-label', muted ? 'Activar música' : 'Silenciar música');
+});
+document.getElementById('play').addEventListener('click', () => setPlaying(!playing));
+document.getElementById('restart').addEventListener('click', () => { elapsed = 0; finished = false; render(true); if(!playing) setPlaying(true); });
+document.getElementById('heart').addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect(); burst(r.left + r.width/2, r.top, true); });
+
+/* ---------- Confetti ---------- */
+const cv = document.getElementById('confetti'), cx = cv.getContext('2d');
+let bits = [];
+function size(){ cv.width = innerWidth; cv.height = innerHeight; }
+addEventListener('resize', size); size();
+const COLORS = ['#e8483f','#ffd23f','#7b6cf6','#5cb85c','#fffaf0','#ff9ac0'];
+function burst(x = innerWidth/2, y = innerHeight/2, hearts = false){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i=0;i<(hearts?24:140);i++){
+    const a = Math.random()*Math.PI*2, s = 3 + Math.random()*8;
+    bits.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,
+      c:hearts?'#e8483f':COLORS[i%COLORS.length],w:5+Math.random()*7,life:120+Math.random()*60,heart:hearts});
+  }
+  if (bits.length && !anim) { anim = true; requestAnimationFrame(draw); }
+}
+let anim = false;
+function draw(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  bits = bits.filter(b => b.life-- > 0 && b.y < cv.height + 20);
+  bits.forEach(b => {
+    b.vy += .18; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+    cx.save(); cx.translate(b.x,b.y); cx.rotate(b.r); cx.fillStyle = b.c;
+    if (b.heart){ cx.font = '18px serif'; cx.fillText('♥', -6, 6); }
+    else cx.fillRect(-b.w/2,-b.w/4,b.w,b.w/2);
+    cx.restore();
+  });
+  if (bits.length) requestAnimationFrame(draw); else { anim = false; cx.clearRect(0,0,cv.width,cv.height); }
+}
+
+/* ---------- Open the gift ---------- */
+const gift = document.getElementById('gift');
+gift.addEventListener('click', () => {
+  if (gift.classList.contains('open')) return;
+  gift.classList.add('open');
+  const r = gift.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top + 40);
+  startMusic(); // unlock audio on the tap
+  setTimeout(() => {
+    document.getElementById('giftScene').hidden = true;
+    document.getElementById('player').hidden = false;
+    document.getElementById('parade').hidden = false;
+    document.body.classList.add('parading');
+    speak('¡Feliz cumpleaños, Carleito!');
+    render(true); setPlaying(true);
+  }, 1100);
+}, {once:false});
+render(true);
+</script>
+</body>
+</html>
