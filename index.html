@@ -150,6 +150,16 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
 .pg.next{background:var(--crayon-yellow)}
 .pg:disabled{opacity:.4;cursor:default}
 .pg:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.book.full{position:fixed;inset:0;z-index:25;box-sizing:border-box;background:linear-gradient(var(--sky-deep),var(--sky) 60%,#bfe3f7);
+  padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.book.full .bookstage{flex:1;aspect-ratio:auto;min-height:0}
+.book.full .page-text{max-width:640px;width:100%;margin-inline:auto;box-sizing:border-box}
+.book.full .pager{max-width:640px;width:100%;margin-inline:auto}
+body.bookfull{overflow:hidden}
+.booktoggle{align-self:center;border:0;cursor:pointer;background:none;color:#fff;font-family:var(--font-round);font-weight:700;font-size:15px;
+  text-decoration:underline;text-underline-offset:3px;padding:6px 10px;text-shadow:0 1px 0 var(--sky-deep)}
+.booktoggle:focus-visible{outline:3px solid #fff;outline-offset:2px;border-radius:8px}
 
 /* ---------- 3D parade ---------- */
 body.three #parade{height:calc(210px + env(safe-area-inset-bottom,0px))}
@@ -253,6 +263,7 @@ body.three.parading .wrap{padding-bottom:calc(225px + env(safe-area-inset-bottom
         <span id="pageNum">1 / 7</span>
         <button class="pg next" id="nextP" aria-label="Página siguiente">Siguiente ›</button>
       </div>
+      <button class="booktoggle" id="bookToggle">Ver la carta completa y la canción ↓</button>
     </div>
 
     <div class="cover" id="coverFallback" aria-hidden="true" hidden>
@@ -550,7 +561,8 @@ gift.addEventListener('click', () => {
     document.getElementById('parade').hidden = false;
     document.body.classList.add('parading');
     speak('¡Feliz cumpleaños, Carleito!');
-    try{ startBook(); }catch(e){ showCoverFallback(); }
+    setBookFull(true);
+    try{ startBook(); }catch(e){ showCoverFallback(); setBookFull(false); }
     try{ start3D(); }catch(e){}
     render(true); setPlaying(true);
   }, 1100);
@@ -588,6 +600,14 @@ const SCENES = [
   {sky:['#7b6cf6','#c9c1ff'], deco:['confetti'], text:'¡Feliz, feliz primer cumpleaños, Carleito! Te queremos muchísimo. Tío Bob y Tía Vivi.',
    items:[['balloons',-1.3,.5,1.5],['cake',0,.85,1.25],['balloons',1.3,.5,1.5],['duck',-.95,1.55,.8],['bear',.95,1.55,.85]], last:true}
 ];
+function setBookFull(on){
+  const b = document.getElementById('book');
+  b.classList.toggle('full', on); document.body.classList.toggle('bookfull', on);
+  document.getElementById('bookToggle').textContent = on ? 'Ver la carta completa y la canción ↓' : 'Ver el cuento en pantalla completa ⤢';
+  window.dispatchEvent(new Event('resize'));
+  if (!on) b.scrollIntoView({block:'start'});
+}
+document.getElementById('bookToggle').addEventListener('click', () => setBookFull(!document.getElementById('book').classList.contains('full')));
 function showCoverFallback(){
   document.getElementById('coverFallback').hidden = false;
   document.getElementById('book').hidden = true;
@@ -674,7 +694,7 @@ function startBook(){
   }
   Object.keys(CUT).forEach(cutTex);
 
-  let page = 0, openP = 0, target = 1, pending = null, building = false;
+  let page = 0, openP = 0, target = 1, pending = null, building = false, xs = 1;
   async function build(i){
     building = true;
     const s = SCENES[i];
@@ -687,7 +707,7 @@ function startBook(){
       const m = new THREE.Mesh(geo, mat); m.castShadow = true;
       m.customDepthMaterial = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking, map:tex, alphaTest:.5});
       const pivot = new THREE.Group(); pivot.position.set(xPos, .003, zPos); pivot.rotation.y = -xPos*.08; pivot.add(m);
-      pivot.userData.k = k; cuts.add(pivot);
+      pivot.userData.k = k; pivot.userData.x0 = xPos; cuts.add(pivot);
     });
     backMat.map = skyTex(i); backMat.needsUpdate = true;
     document.getElementById('pageText').textContent = s.text;
@@ -719,8 +739,11 @@ function startBook(){
   function resize(){
     const W = stage.clientWidth || 360, H = stage.clientHeight || 330;
     renderer.setSize(W, H, false); cam.aspect = W/H;
-    const far = W/H < .95 ? 9.2 : 8.2;
-    cam.position.set(0, 3.5, far*.64); cam.lookAt(0, .9, .75); cam.updateProjectionMatrix();
+    const tanV = Math.tan(36/2*Math.PI/180), portrait = cam.aspect < .9;
+    xs = portrait ? .6 : 1; back.scale.y = portrait ? 1.45 : 1;
+    const ty = portrait ? 1.35 : .9;
+    const d = Math.max(4.4, (1.3*xs + .95) / (tanV * cam.aspect));
+    cam.position.set(0, ty + d*.55, .75 + d*.83); cam.lookAt(0, ty, .75); cam.updateProjectionMatrix();
   }
   addEventListener('resize', resize); resize();
 
@@ -747,6 +770,7 @@ function startBook(){
     back.rotation.x = (Math.PI/2 - .02) * (1 - e) + (-.16) * e;
     cuts.children.forEach(pv => {
       const k = pv.userData.k, lp = clamp((openP - .2 - k*.09) / .55);
+      pv.position.x = pv.userData.x0 * xs;
       const up = back3(lp);
       pv.rotation.x = (Math.PI/2 - .035) * (1 - up) + (lp === 1 && !still ? Math.sin(t*2.2 + k)*.035 : 0);
       pv.rotation.z = lp === 1 && !still ? Math.sin(t*1.7 + k*1.3)*.03 : 0;
