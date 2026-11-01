@@ -136,6 +136,21 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
 @keyframes trunk{to{transform:rotate(-28deg)}}
 @keyframes sway{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
 
+/* ---------- Pop-up book ---------- */
+.book{display:flex;flex-direction:column;gap:10px}
+.bookstage{width:100%;max-width:100%;aspect-ratio:1/0.92;cursor:pointer;border-radius:16px;
+  background:radial-gradient(70% 60% at 50% 60%,rgba(255,255,255,.45),transparent 70%)}
+.bookstage:focus-visible{outline:3px dashed #fff;outline-offset:4px}
+.bookstage canvas{display:block;width:100%;height:100%}
+.page-text{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-hand);font-size:clamp(20px,5.4vw,24px);line-height:1.3;
+  padding:12px 16px;border-radius:14px 18px 12px 20px;box-shadow:3px 4px 0 rgba(43,42,74,.15);min-height:3.9em;text-wrap:pretty}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#1e3f66;font-weight:700;font-variant-numeric:tabular-nums}
+.pg{border:0;cursor:pointer;background:var(--paper);color:var(--ink);font-family:var(--font-round);font-weight:800;font-size:18px;
+  min-width:48px;height:44px;padding:0 14px;border-radius:24px;box-shadow:2px 3px 0 rgba(43,42,74,.18)}
+.pg.next{background:var(--crayon-yellow)}
+.pg:disabled{opacity:.4;cursor:default}
+.pg:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
 /* ---------- 3D parade ---------- */
 body.three #parade{height:calc(210px + env(safe-area-inset-bottom,0px))}
 body.three #parade::before{display:none}
@@ -230,7 +245,17 @@ body.three.parading .wrap{padding-bottom:calc(225px + env(safe-area-inset-bottom
   <section id="player" hidden>
     <div class="now">Sonando para Carleito · Primer cumpleaños</div>
 
-    <div class="cover" aria-hidden="true">
+    <div class="book" id="book">
+      <div class="bookstage" id="bookStage" role="button" tabindex="0" aria-label="Pasar a la siguiente página del cuento"></div>
+      <p class="page-text" id="pageText" aria-live="polite"></p>
+      <div class="pager">
+        <button class="pg" id="prevP" aria-label="Página anterior">‹</button>
+        <span id="pageNum">1 / 7</span>
+        <button class="pg next" id="nextP" aria-label="Página siguiente">Siguiente ›</button>
+      </div>
+    </div>
+
+    <div class="cover" id="coverFallback" aria-hidden="true" hidden>
       <svg viewBox="0 0 400 400">
         <defs>
           <filter id="crayon" x="-5%" y="-5%" width="110%" height="110%">
@@ -525,11 +550,211 @@ gift.addEventListener('click', () => {
     document.getElementById('parade').hidden = false;
     document.body.classList.add('parading');
     speak('¡Feliz cumpleaños, Carleito!');
+    try{ startBook(); }catch(e){ showCoverFallback(); }
     try{ start3D(); }catch(e){}
     render(true); setPlaying(true);
   }, 1100);
 }, {once:false});
 render(true);
+
+/* ---------- Libro pop-up 3D (recortes de papel originales) ---------- */
+const XMLNS = '<svg xmlns="http://www.w3.org/2000/svg" ';
+const ANIMAL_SVG = [...document.querySelectorAll('#parade .walker svg')].map(s => s.outerHTML.replace('<svg ', XMLNS));
+const svg = body => XMLNS + 'viewBox="0 0 100 100">' + body + '</svg>';
+const CUT = {
+  bear: ANIMAL_SVG[0], duck: ANIMAL_SVG[1], elephant: ANIMAL_SVG[2], bunny: ANIMAL_SVG[3], snail: ANIMAL_SVG[4],
+  heart: svg('<path d="M50 90 C8 62 6 30 27 21 C40 16 48 25 50 32 C52 25 60 16 73 21 C94 30 92 62 50 90Z" fill="#e8483f"/><ellipse cx="33" cy="34" rx="7" ry="4" fill="#fff" opacity=".55" transform="rotate(-30 33 34)"/>'),
+  gift: svg('<rect x="14" y="44" width="72" height="50" rx="4" fill="#7b6cf6"/><rect x="10" y="32" width="80" height="16" rx="4" fill="#9b8ff8"/><rect x="45" y="32" width="10" height="62" fill="#ffd23f"/><path d="M50 32 C38 10 22 18 30 30 Z M50 32 C62 10 78 18 70 30 Z" fill="#ffd23f"/>'),
+  cake: svg('<ellipse cx="50" cy="94" rx="42" ry="5" fill="#fffaf0"/><rect x="14" y="60" width="72" height="32" rx="6" fill="#ffb3c7"/><rect x="24" y="40" width="52" height="22" rx="5" fill="#fffaf0"/><path d="M14 66 q9 8 18 0 q9 8 18 0 q9 8 18 0 q9 8 18 0" fill="#fffaf0"/><circle cx="30" cy="78" r="3" fill="#e8483f"/><circle cx="50" cy="80" r="3" fill="#7b6cf6"/><circle cx="70" cy="78" r="3" fill="#ffd23f"/><path d="M46 18 h8 v22 h-8z M42 22 l8 -6 v6z" fill="#7b6cf6"/><path d="M50 3 q7 7 0 12 q-7 -5 0 -12z" fill="#ffb703"/>'),
+  balloons: svg('<path d="M30 46 Q44 70 50 98 M50 38 Q50 70 50 98 M72 44 Q58 70 50 98" stroke="#2b2a4a" stroke-width="1.5" fill="none"/><ellipse cx="30" cy="30" rx="15" ry="18" fill="#e8483f"/><ellipse cx="72" cy="28" rx="15" ry="18" fill="#7b6cf6"/><ellipse cx="50" cy="20" rx="16" ry="19" fill="#ffd23f"/><ellipse cx="45" cy="13" rx="4" ry="6" fill="#fff" opacity=".5"/>'),
+  sun: svg('<rect x="47" y="50" width="6" height="50" fill="#a8693f"/><g stroke="#ffb703" stroke-width="5" stroke-linecap="round"><line x1="50" y1="2" x2="50" y2="10"/><line x1="16" y1="28" x2="24" y2="28"/><line x1="76" y1="28" x2="84" y2="28"/><line x1="26" y1="6" x2="31" y2="11"/><line x1="74" y1="6" x2="69" y2="11"/><line x1="26" y1="50" x2="31" y2="45"/><line x1="74" y1="50" x2="69" y2="45"/></g><circle cx="50" cy="28" r="19" fill="#ffd23f"/><circle cx="43" cy="25" r="2.5" fill="#2b2a4a"/><circle cx="57" cy="25" r="2.5" fill="#2b2a4a"/><path d="M42 33 q8 7 16 0" stroke="#e8483f" stroke-width="3" fill="none" stroke-linecap="round"/>'),
+  moon: svg('<rect x="47" y="48" width="6" height="52" fill="#a8693f"/><path d="M60 6 A24 24 0 1 0 64 50 A19 19 0 1 1 60 6Z" fill="#ffe08a"/><circle cx="44" cy="26" r="2.5" fill="#2b2a4a"/><path d="M40 34 q5 4 10 0" stroke="#2b2a4a" stroke-width="2" fill="none"/>'),
+  star: svg('<rect x="47" y="46" width="6" height="54" fill="#a8693f"/><path d="M50 4 L58 22 L78 24 L63 37 L67 56 L50 46 L33 56 L37 37 L22 24 L42 22Z" fill="#ffd23f"/><circle cx="45" cy="30" r="2" fill="#2b2a4a"/><circle cx="55" cy="30" r="2" fill="#2b2a4a"/>'),
+  plane: svg('<rect x="47" y="44" width="6" height="56" fill="#a8693f"/><path d="M8 26 q40 -14 80 -2 q6 4 0 8 q-40 10 -80 2z" fill="#fffaf0" stroke="#2b2a4a" stroke-width="1.5"/><path d="M40 26 l14 -20 h8 l-6 22z M40 34 l14 18 h8 l-6 -20z M12 26 l-6 -12 h7 l9 12z" fill="#e8483f"/><circle cx="70" cy="26" r="3" fill="#8ec9ee"/><circle cx="60" cy="27" r="3" fill="#8ec9ee"/><circle cx="50" cy="28" r="3" fill="#8ec9ee"/>')
+};
+const SCENES = [
+  {sky:['#ffcf9e','#fff1df'], deco:['sunrise','clouds'], text:'Carleito peshosho: hace apenas un año llegaste a nuestras vidas, y qué rápido se ha pasado el tiempo.',
+   items:[['duck',-1.25,1.05,1.05],['heart',0,.55,1.05],['bunny',1.25,1.0,1.1]]},
+  {sky:['#8ec9ee','#d9f0ff'], deco:['clouds'], text:'Nos hiciste llorar de emoción desde que tus papás, nuestros amigos y hermanos, nos contaron que venías en camino.',
+   items:[['elephant',-1.15,1.0,1.25],['gift',.2,.6,.9],['snail',1.3,1.25,1.0]]},
+  {sky:['#2e3d7a','#5a6fb8'], deco:['stars'], text:'Y otra vez el día que naciste, cuando nos llegaron tus primeras fotos.',
+   items:[['moon',-1.2,.45,1.5],['bunny',0,1.15,1.1],['star',1.25,.5,1.4]]},
+  {sky:['#5aa6dc','#bfe3f7'], deco:['clouds','bigsun'], text:'Por fin llegó el día de conocerte. Este verano nos hiciste muy felices y te disfrutamos como locos.',
+   items:[['sun',-1.3,.45,1.5],['bear',0,1.0,1.2],['duck',1.3,1.15,1.0]]},
+  {sky:['#f7a07a','#ffd9b8'], deco:['clouds'], text:'Aunque estemos lejos, te amamos muchísimo, y siempre vamos a estar aquí como los tíos más felices del mundo.',
+   items:[['plane',-.2,.4,1.7],['heart',-1.35,1.15,.9],['elephant',1.2,1.1,1.2]]},
+  {sky:['#ffb3c7','#ffe6ee'], deco:['hearts'], text:'Te abrazamos y te extrañamos muchísimo, y a tus papis también. Eres un bebito increíble que nos llena de luz.',
+   items:[['bear',-1.2,1.05,1.15],['heart',0,.55,1.15],['bunny',1.2,1.0,1.1],['snail',.15,1.55,.75]]},
+  {sky:['#7b6cf6','#c9c1ff'], deco:['confetti'], text:'¡Feliz, feliz primer cumpleaños, Carleito! Te queremos muchísimo. Tío Bob y Tía Vivi.',
+   items:[['balloons',-1.3,.5,1.5],['cake',0,.85,1.25],['balloons',1.3,.5,1.5],['duck',-.95,1.55,.8],['bear',.95,1.55,.85]], last:true}
+];
+function showCoverFallback(){
+  document.getElementById('coverFallback').hidden = false;
+  document.getElementById('book').hidden = true;
+}
+let bookStarted = false;
+function startBook(){
+  if (bookStarted) return;
+  if (!window.THREE) { showCoverFallback(); return; }
+  const stage = document.getElementById('bookStage');
+  let renderer;
+  try{ renderer = new THREE.WebGLRenderer({antialias:true, alpha:true}); }catch(e){ showCoverFallback(); return; }
+  if (!renderer || !renderer.getContext()) { showCoverFallback(); return; }
+  bookStarted = true;
+  stage.appendChild(renderer.domElement);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(36, 1, .1, 100);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8cbb0, .8));
+  const lamp = new THREE.DirectionalLight(0xfff3df, .75);
+  lamp.position.set(-2.5, 6, 5); lamp.castShadow = true; lamp.shadow.mapSize.set(1024,1024);
+  Object.assign(lamp.shadow.camera, {left:-4, right:4, top:4, bottom:-4}); lamp.shadow.radius = 5; lamp.shadow.bias = -.0005;
+  scene.add(lamp);
+
+  const P = (c,r=.95) => new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:0});
+  const PW = 4.3, PD = 2.6;
+  // tapa del libro (abajo) y hoja de abajo
+  const coverB = new THREE.Mesh(new THREE.BoxGeometry(PW+.3, .1, PD+.25), P(0xe8483f)); coverB.position.set(0,-.06,PD/2+.05); coverB.receiveShadow = true; scene.add(coverB);
+  const floorTex = paperTex();
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(PW, PD), new THREE.MeshStandardMaterial({map:floorTex, roughness:1}));
+  floor.rotation.x = -Math.PI/2; floor.position.set(0,.001,PD/2); floor.receiveShadow = true; scene.add(floor);
+  // hoja de atrás con su tapa: gira sobre el lomo
+  const back = new THREE.Group(); scene.add(back);
+  const coverT = new THREE.Mesh(new THREE.BoxGeometry(PW+.3, PD+.25, .1), P(0xe8483f)); coverT.position.set(0, PD/2+.05, -.06); coverT.castShadow = true; back.add(coverT);
+  const backMat = new THREE.MeshStandardMaterial({roughness:1});
+  const backPage = new THREE.Mesh(new THREE.PlaneGeometry(PW, PD), backMat); backPage.position.set(0, PD/2, .002); backPage.receiveShadow = true; back.add(backPage);
+  const spine = new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,PW+.3,16), P(0xc73a32)); spine.rotation.z = Math.PI/2; spine.position.set(0,-.02,-.02); scene.add(spine);
+  const cuts = new THREE.Group(); scene.add(cuts);
+
+  function paperTex(){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 320; const x = c.getContext('2d');
+    x.fillStyle = '#fffaf0'; x.fillRect(0,0,512,320);
+    for (let i=0;i<900;i++){ x.fillStyle = 'rgba(160,130,90,' + (Math.random()*.06) + ')'; x.fillRect(Math.random()*512, Math.random()*320, 2, 2); }
+    const g = x.createLinearGradient(0,0,0,70); g.addColorStop(0,'#9be08a'); g.addColorStop(1,'rgba(155,224,138,0)'); x.fillStyle = g; x.fillRect(0,0,512,70);
+    x.strokeStyle = 'rgba(43,42,74,.12)'; x.lineWidth = 6; x.strokeRect(10,10,492,300);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  }
+  const skyCache = {};
+  function skyTex(i){
+    if (skyCache[i]) return skyCache[i];
+    const s = SCENES[i], c = document.createElement('canvas'); c.width = 512; c.height = 320; const x = c.getContext('2d');
+    const g = x.createLinearGradient(0,0,0,320); g.addColorStop(0,s.sky[0]); g.addColorStop(1,s.sky[1]); x.fillStyle = g; x.fillRect(0,0,512,320);
+    const blob = (cx,cy,r,col) => { x.fillStyle = col; x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.fill(); };
+    if (s.deco.includes('sunrise')) blob(256, 300, 110, '#ffd23f');
+    if (s.deco.includes('bigsun')) blob(430, 70, 40, '#ffe27a');
+    if (s.deco.includes('clouds')) [[90,70],[330,50],[200,120]].forEach(([cx,cy]) => { blob(cx,cy,26,'#fff'); blob(cx+28,cy-8,30,'#fff'); blob(cx+56,cy,24,'#fff'); });
+    if (s.deco.includes('stars')) for (let k=0;k<40;k++) blob(Math.random()*512, Math.random()*230, 1.5+Math.random()*2.5, '#fff6c8');
+    if (s.deco.includes('hearts')) for (let k=0;k<14;k++){ x.fillStyle = 'rgba(232,72,63,.35)'; x.font = (18+Math.random()*16) + 'px serif'; x.fillText('♥', Math.random()*490, 20+Math.random()*220); }
+    if (s.deco.includes('confetti')) for (let k=0;k<70;k++){ x.fillStyle = ['#ffd23f','#e8483f','#fffaf0','#5cb85c','#ff9ac0'][k%5]; x.fillRect(Math.random()*512, Math.random()*250, 7, 4); }
+    x.fillStyle = '#5cb85c'; x.beginPath(); x.moveTo(0,320); x.quadraticCurveTo(130,230,260,280); x.quadraticCurveTo(390,240,512,270); x.lineTo(512,320); x.fill();
+    x.fillStyle = '#2f7d4f'; x.globalAlpha = .45; x.beginPath(); x.moveTo(0,320); x.quadraticCurveTo(200,270,512,305); x.lineTo(512,320); x.fill(); x.globalAlpha = 1;
+    x.strokeStyle = '#fffaf0'; x.lineWidth = 14; x.strokeRect(0,0,512,320);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return (skyCache[i] = t);
+  }
+  const cutCache = {};
+  function cutTex(key){
+    if (cutCache[key]) return cutCache[key];
+    return (cutCache[key] = new Promise(res => {
+      const img = new Image();
+      img.onload = () => {
+        const N = 320, pad = 18, s = N - pad*2;
+        const c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d');
+        const sil = document.createElement('canvas'); sil.width = sil.height = N; const sx = sil.getContext('2d');
+        sx.drawImage(img,pad,pad,s,s); sx.globalCompositeOperation = 'source-in'; sx.fillStyle = '#fffaf0'; sx.fillRect(0,0,N,N);
+        for (let a=0;a<20;a++){ const ang = a/20*Math.PI*2; x.drawImage(sil, Math.cos(ang)*9, Math.sin(ang)*9); }
+        x.drawImage(img,pad,pad,s,s);
+        const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; res(t);
+      };
+      img.onerror = () => res(null);
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(CUT[key]);
+    }));
+  }
+  Object.keys(CUT).forEach(cutTex);
+
+  let page = 0, openP = 0, target = 1, pending = null, building = false;
+  async function build(i){
+    building = true;
+    const s = SCENES[i];
+    const texs = await Promise.all(s.items.map(it => cutTex(it[0])));
+    while (cuts.children.length) cuts.remove(cuts.children[0]);
+    s.items.forEach((it, k) => {
+      const [key, xPos, zPos, size] = it, tex = texs[k]; if (!tex) return;
+      const geo = new THREE.PlaneGeometry(size, size); geo.translate(0, size/2 - size*.04, 0);
+      const mat = new THREE.MeshStandardMaterial({map:tex, transparent:true, alphaTest:.5, side:THREE.DoubleSide, roughness:1});
+      const m = new THREE.Mesh(geo, mat); m.castShadow = true;
+      m.customDepthMaterial = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking, map:tex, alphaTest:.5});
+      const pivot = new THREE.Group(); pivot.position.set(xPos, .003, zPos); pivot.rotation.y = -xPos*.08; pivot.add(m);
+      pivot.userData.k = k; cuts.add(pivot);
+    });
+    backMat.map = skyTex(i); backMat.needsUpdate = true;
+    document.getElementById('pageText').textContent = s.text;
+    document.getElementById('pageNum').textContent = (i+1) + ' / ' + SCENES.length;
+    document.getElementById('prevP').disabled = i === 0;
+    document.getElementById('nextP').textContent = i === SCENES.length-1 ? 'Otra vez ↺' : 'Siguiente ›';
+    building = false;
+  }
+  function swish(){
+    try{
+      ensureCtx(); const n = ctx.sampleRate*.35, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      for (let k=0;k<n;k++) d[k] = (Math.random()*2-1) * Math.pow(1 - k/n, 2);
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = b; f.type = 'bandpass'; f.frequency.value = 2200; f.Q.value = .7; g.gain.value = .35;
+      src.connect(f).connect(g).connect(master); src.start();
+    }catch(e){}
+  }
+  let autoOn = true, lastTurn = 0;
+  function go(i, byUser){
+    if (byUser) autoOn = false;
+    if (building || pending !== null) return;
+    pending = (i + SCENES.length) % SCENES.length; target = 0; swish();
+  }
+  stage.addEventListener('click', () => go(page+1, true));
+  stage.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(page+1, true); } });
+  document.getElementById('nextP').addEventListener('click', () => go(page+1, true));
+  document.getElementById('prevP').addEventListener('click', () => go(page-1, true));
+
+  function resize(){
+    const W = stage.clientWidth || 360, H = stage.clientHeight || 330;
+    renderer.setSize(W, H, false); cam.aspect = W/H;
+    const far = W/H < .95 ? 9.2 : 8.2;
+    cam.position.set(0, 4.1, far*.78); cam.lookAt(0, .95, .85); cam.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize); resize();
+
+  const ease = p => p<.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2;
+  const back3 = p => { const c1 = 1.9, c3 = c1+1; return 1 + c3*Math.pow(p-1,3) + c1*Math.pow(p-1,2); };
+  const clamp = v => Math.max(0, Math.min(1, v));
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clock = new THREE.Clock(); let prev = 0;
+  build(0).then(() => { lastTurn = clock.getElapsedTime(); });
+  function frame(){
+    requestAnimationFrame(frame);
+    if (document.hidden || document.getElementById('book').hidden) return;
+    const t = clock.getElapsedTime(), dt = Math.min(.05, t - prev); prev = t;
+    if (!building){
+      const speed = still ? 50 : (target ? .55 : 1.5);
+      openP += (target ? 1 : -1) * dt * speed; openP = clamp(openP);
+      if (openP === 0 && pending !== null){
+        page = pending; pending = null;
+        build(page).then(() => { target = 1; lastTurn = clock.getElapsedTime(); if (SCENES[page].last) setTimeout(() => burst(), 700); });
+      }
+    }
+    if (autoOn && playing && pending === null && openP === 1 && t - lastTurn > 9 && page < SCENES.length-1) go(page+1, false);
+    const e = ease(openP);
+    back.rotation.x = (Math.PI/2 - .02) * (1 - e) + (-.16) * e;
+    cuts.children.forEach(pv => {
+      const k = pv.userData.k, lp = clamp((openP - .2 - k*.09) / .55);
+      const up = back3(lp);
+      pv.rotation.x = (Math.PI/2 - .035) * (1 - up) + (lp === 1 && !still ? Math.sin(t*2.2 + k)*.035 : 0);
+      pv.rotation.z = lp === 1 && !still ? Math.sin(t*1.7 + k*1.3)*.03 : 0;
+    });
+    renderer.render(scene, cam);
+  }
+  frame();
+}
 
 /* ---------- Desfile 3D (figuritas originales tipo plastilina) ---------- */
 let started3D = false;
