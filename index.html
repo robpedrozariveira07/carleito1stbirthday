@@ -135,6 +135,14 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
 @keyframes trunk{to{transform:rotate(-28deg)}}
 @keyframes sway{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
 
+/* ---------- 3D parade ---------- */
+body.three #parade{height:calc(210px + env(safe-area-inset-bottom,0px))}
+body.three #parade::before{display:none}
+body.three.parading .wrap{padding-bottom:calc(225px + env(safe-area-inset-bottom,0px))}
+.p3d{position:absolute;left:0;bottom:0;width:100%;height:100%;pointer-events:auto;touch-action:manipulation;cursor:pointer;display:block}
+.say3d{bottom:auto;z-index:2;pointer-events:none;transform:translate(-50%,-80%) scale(.4)}
+.say3d.show{transform:translate(-50%,-100%) scale(1)}
+
 @media (prefers-reduced-motion:reduce){
   .walker,.bob,.hop,.beat,.flap,.trunk,.wave{animation:none}
   .walker{left:auto}.walker:nth-child(1){left:2%}.walker:nth-child(2){left:22%}.walker:nth-child(3){left:42%}.walker:nth-child(4){left:62%}.walker:nth-child(5){left:80%}
@@ -144,6 +152,7 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
 </head>
 <body>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <canvas id="confetti"></canvas>
 
 <div id="parade" aria-hidden="true" hidden>
@@ -515,10 +524,187 @@ gift.addEventListener('click', () => {
     document.getElementById('parade').hidden = false;
     document.body.classList.add('parading');
     speak('¡Feliz cumpleaños, Carleito!');
+    try{ start3D(); }catch(e){}
     render(true); setPlaying(true);
   }, 1100);
 }, {once:false});
 render(true);
+
+/* ---------- Desfile 3D (figuritas originales tipo plastilina) ---------- */
+let started3D = false;
+function start3D(){
+  if (started3D || !window.THREE) return;
+  const parade = document.getElementById('parade');
+  let renderer;
+  try{ renderer = new THREE.WebGLRenderer({antialias:true, alpha:true}); }catch(e){ return; }
+  if (!renderer || !renderer.getContext()) return;
+  started3D = true;
+  document.body.classList.add('three');
+  parade.querySelectorAll('.walker').forEach(w => w.remove());
+  const canvas = renderer.domElement; canvas.className = 'p3d'; parade.appendChild(canvas);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  const scene = new THREE.Scene();
+  const FOV = 32, cam = new THREE.PerspectiveCamera(FOV, 1, .1, 100);
+  cam.position.set(0, 2.3, 8); cam.lookAt(0, .95, 0);
+  scene.add(new THREE.HemisphereLight(0xe6f5ff, 0x6fbf5a, .95));
+  const sun = new THREE.DirectionalLight(0xfff1d6, .85);
+  sun.position.set(-3, 8, 6); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, {left:-14, right:14, top:6, bottom:-4}); sun.shadow.radius = 4;
+  scene.add(sun);
+
+  const mats = {};
+  const M = c => mats[c] || (mats[c] = new THREE.MeshStandardMaterial({color:c, roughness:.92, metalness:0}));
+  const S = (r,c,x=0,y=0,z=0,sx=1,sy=1,sz=1) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r,26,18), M(c)); m.position.set(x,y,z); m.scale.set(sx,sy,sz); m.castShadow = true; return m; };
+  const C = (rt,rb,h,c,x=0,y=0,z=0) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,22), M(c)); m.position.set(x,y,z); m.castShadow = true; return m; };
+  const add = (g,...ms) => { ms.forEach(m => g.add(m)); return g; };
+  const eyes = (g,x,y,z) => add(g, S(.055,0x2b2a4a,x,y,z), S(.055,0x2b2a4a,x,y,-z), S(.018,0xffffff,x-.045,y+.02,z), S(.018,0xffffff,x-.045,y+.02,-z));
+  const cheeks = (g,x,y,z) => add(g, S(.06,0xff9ac0,x,y,z,1,.6,1), S(.06,0xff9ac0,x,y,-z,1,.6,1));
+
+  function bear(){
+    const g = new THREE.Group();
+    add(g, S(.5,0xc8895a,0,.62,0,1,1.05,.9), S(.38,0xc8895a,-.08,1.28,0),
+      S(.13,0xa8693f,-.02,1.6,.26), S(.13,0xa8693f,-.02,1.6,-.26),
+      S(.17,0xf1d1b0,-.4,1.2,0,1,.8,1), S(.06,0x2b2a4a,-.56,1.25,0),
+      S(.16,0xa8693f,-.1,.12,.22,1.3,.6,1), S(.16,0xa8693f,-.1,.12,-.22,1.3,.6,1));
+    eyes(g,-.36,1.37,.14); cheeks(g,-.33,1.2,.26);
+    const drum = add(new THREE.Group(), C(.34,.34,.32,0xe8483f), C(.345,.345,.04,0xfffaf0,0,.17,0), C(.35,.35,.05,0xffd23f,0,-.15,0));
+    drum.position.set(-.55,.6,0); g.add(drum);
+    const stick = z => { const p = new THREE.Group(); p.position.set(-.25,.95,z); add(p, C(.025,.025,.55,0x7a4b2a,0,-.27,0), S(.05,0xfffaf0,0,-.55,0)); g.add(p); return p; };
+    const a = stick(.2), b = stick(-.2);
+    g.userData.tick = t => { a.rotation.z = -1 + Math.sin(t*14)*.35; b.rotation.z = -1 - Math.sin(t*14)*.35; };
+    return g;
+  }
+  function duck(){
+    const g = new THREE.Group();
+    add(g, S(.48,0xffd23f,0,.55,0,1.25,.8,.9), S(.32,0xffd23f,-.5,1.05,0),
+      S(.1,0xff9a52,-.1,.08,.18,1.6,.4,1), S(.1,0xff9a52,-.1,.08,-.18,1.6,.4,1), S(.12,0xffd23f,.55,.75,0,1,.7,.8));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(.12,.3,18), M(0xff9a52)); beak.rotation.z = Math.PI/2; beak.position.set(-.88,1.0,0); beak.castShadow = true; g.add(beak);
+    eyes(g,-.72,1.14,.15); cheeks(g,-.7,1.0,.22);
+    const w1 = S(.28,0xf4b400,.05,.6,.42,1.1,.5,.25), w2 = S(.28,0xf4b400,.05,.6,-.42,1.1,.5,.25); add(g,w1,w2);
+    const bal = add(new THREE.Group(), C(.008,.008,1.3,0x2b2a4a,0,-.65,0), S(.32,0x7b6cf6,0,.38,0,1,1.2,1), S(.05,0x7b6cf6,0,-.02,0));
+    bal.position.set(.25,1.5,0); g.add(bal);
+    g.userData.tick = t => { w1.rotation.x = Math.sin(t*12)*.5; w2.rotation.x = -Math.sin(t*12)*.5; bal.rotation.z = Math.sin(t*1.6)*.15; };
+    return g;
+  }
+  function elephant(){
+    const g = new THREE.Group();
+    [[.4,.3],[.4,-.3],[-.25,.3],[-.25,-.3]].forEach(([x,z]) => g.add(C(.15,.15,.5,0x94a3ba,x,.25,z)));
+    add(g, S(.6,0xa6b4c8,.1,.8,0,1.3,1,1), S(.45,0xa6b4c8,-.65,1.15,0),
+      S(.38,0x8c9bb2,-.42,1.2,.42,.25,1,.9), S(.38,0x8c9bb2,-.42,1.2,-.42,.25,1,.9), S(.08,0x8c9bb2,.9,.8,0));
+    eyes(g,-.98,1.27,.17); cheeks(g,-.95,1.08,.27);
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(.17,.45,20), M(0xe8483f)); hat.position.set(-.62,1.75,0); hat.rotation.z = .25; hat.castShadow = true;
+    add(g, hat, S(.07,0xffd23f,-.68,1.97,0));
+    const trunk = add(new THREE.Group(), C(.11,.13,.3,0xa6b4c8,0,-.15,0), C(.09,.11,.3,0xa6b4c8,0,-.42,0), S(.1,0xa6b4c8,0,-.58,0));
+    trunk.position.set(-1.0,1.02,0); g.add(trunk);
+    g.userData.tick = t => { trunk.rotation.z = -.35 + Math.sin(t*3)*.45; };
+    return g;
+  }
+  function bunny(){
+    const g = new THREE.Group();
+    add(g, S(.42,0xfffaf0,0,.6,0,.85,1.05,.85), S(.32,0xfffaf0,-.12,1.25,0),
+      S(.05,0xff9ac0,-.43,1.22,0), S(.13,0xffffff,.38,.62,0),
+      S(.12,0xfffaf0,-.15,.08,.15,1.6,.5,1), S(.12,0xfffaf0,-.15,.08,-.15,1.6,.5,1));
+    const e1 = S(.1,0xfffaf0,-.05,1.75,.14,1,3.2,1), e2 = S(.1,0xfffaf0,-.05,1.75,-.14,1,3.2,1);
+    e1.add(S(.06,0xffb3c7,-.05,0,0,.6,.8,.5)); e2.add(S(.06,0xffb3c7,-.05,0,0,.6,.8,.5));
+    add(g,e1,e2); eyes(g,-.38,1.33,.13); cheeks(g,-.35,1.16,.2);
+    const a1 = S(.09,0xfffaf0,-.25,.95,.3,1,2,1), a2 = S(.09,0xfffaf0,-.25,.95,-.3,1,2,1); add(g,a1,a2);
+    g.userData.hopper = true;
+    g.userData.tick = t => { e1.rotation.x = .2 + Math.sin(t*5)*.15; e2.rotation.x = -.2 - Math.sin(t*5)*.15; a1.rotation.x = -.6 + Math.sin(t*8)*.5; a2.rotation.x = .6 - Math.sin(t*8)*.5; };
+    return g;
+  }
+  function snail(){
+    const g = new THREE.Group();
+    add(g, S(.3,0x9be08a,-.1,.22,0,2.6,.7,1.2), S(.22,0x9be08a,-.75,.55,0),
+      C(.025,.025,.35,0x9be08a,-.78,.85,.1), C(.025,.025,.35,0x9be08a,-.78,.85,-.1),
+      S(.06,0x2b2a4a,-.78,1.05,.1), S(.06,0x2b2a4a,-.78,1.05,-.1),
+      S(.5,0xff9ac0,.15,.75,0,1,1,.75));
+    cheeks(g,-.9,.5,.14);
+    [[.27,.06,.38],[.12,.045,.39]].forEach(([r,tb,z]) => { [z,-z].forEach(zz => { const tor = new THREE.Mesh(new THREE.TorusGeometry(r,tb,12,40), M(0xe86b9a)); tor.position.set(.15,.75,zz); g.add(tor); }); });
+    add(g, C(.22,.22,.18,0xfffaf0,.1,1.32,0), C(.225,.225,.05,0xff9ac0,.1,1.4,0), C(.035,.035,.25,0x7b6cf6,.1,1.55,0));
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(.06,14,10), new THREE.MeshBasicMaterial({color:0xffb703}));
+    flame.position.set(.1,1.75,0); flame.scale.set(1,1.6,1); g.add(flame);
+    g.userData.tick = t => { flame.scale.set(1 + Math.sin(t*20)*.15, 1.6 + Math.sin(t*17)*.3, 1); };
+    return g;
+  }
+
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 8), M(0x5cb85c));
+  ground.rotation.x = -Math.PI/2; ground.position.z = 0.5; ground.receiveShadow = true; scene.add(ground);
+  const fcols = [0xffd23f,0xe8483f,0xfffaf0,0xff9ac0,0x7b6cf6];
+  for (let i=0; i<60; i++){
+    const x = -30 + Math.random()*60, z = (Math.random() < .5 ? -1 : 1) * (1 + Math.random()*1.6);
+    const st = C(.015,.015,.22,0x2f7d4f,x,.11,z); st.castShadow = false; scene.add(st);
+    scene.add(S(.07,fcols[i%fcols.length],x,.24,z));
+  }
+
+  const animals = [bear(), duck(), elephant(), bunny(), snail()];
+  const bubbles = animals.map(a => {
+    a.rotation.y = .4; a.userData.hopY = 0; a.userData.vy = 0; a.userData.spin = 0; scene.add(a);
+    const b = document.createElement('span'); b.className = 'say say3d'; parade.appendChild(b); return b;
+  });
+
+  let W = 1, H = 1, halfW = 4, L = 12;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function resize(){
+    W = parade.clientWidth || innerWidth; H = parade.clientHeight || 200;
+    renderer.setSize(W, H, false); cam.aspect = W/H; cam.updateProjectionMatrix();
+    halfW = Math.tan(FOV/2*Math.PI/180) * 8 * cam.aspect; L = 2*halfW + 3;
+  }
+  addEventListener('resize', resize); resize();
+
+  const v = new THREE.Vector3();
+  function bubbleAt(i){
+    const a = animals[i]; v.set(a.position.x - .3, a.position.y + 2.35, a.position.z).project(cam);
+    bubbles[i].style.left = ((v.x + 1)/2*W) + 'px'; bubbles[i].style.top = ((1 - v.y)/2*H) + 'px';
+  }
+  function say3d(i, text, voice){
+    const b = bubbles[i]; b.textContent = text; b.classList.add('show');
+    clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('show'), 1900);
+    if (voice) speak(text);
+  }
+  const onScreen = i => Math.abs(animals[i].position.x) < halfW - .6;
+  setInterval(() => {
+    if (parade.hidden) return;
+    const vis = animals.map((_,i) => i).filter(onScreen);
+    if (vis.length) say3d(pick(vis), pick(PHRASES), false);
+  }, 2300);
+
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  canvas.addEventListener('pointerdown', e => {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+    ray.setFromCamera(ndc, cam);
+    const hit = ray.intersectObjects(animals, true)[0];
+    if (!hit) return;
+    let o = hit.object; while (o.parent && o.parent !== scene) o = o.parent;
+    const i = animals.indexOf(o); if (i < 0) return;
+    o.userData.vy = 6.5; o.userData.spin = Math.PI*2;
+    boing(); say3d(i, Math.random() < .6 ? '¡Hola, Carleito!' : pick(PHRASES), true);
+  });
+
+  const clock = new THREE.Clock(); let prev = 0;
+  function frame(){
+    requestAnimationFrame(frame);
+    if (parade.hidden || document.hidden) return;
+    const t = clock.getElapsedTime(), dt = Math.min(.05, t - prev); prev = t;
+    animals.forEach((a,i) => {
+      const u = a.userData;
+      if (still) a.position.x = -halfW + 1.2 + i*(2*halfW - 2.4)/4;
+      else a.position.x = halfW + 1.5 - ((t * L/26 + i*L/5) % L);
+      u.vy -= 18*dt; u.hopY = Math.max(0, u.hopY + u.vy*dt); if (u.hopY === 0) u.vy = Math.max(0, u.vy);
+      const walk = still ? 0 : (u.hopper ? Math.abs(Math.sin(t*4 + i))*.35 : Math.abs(Math.sin(t*6 + i))*.06);
+      a.position.y = u.hopY + walk;
+      a.rotation.z = still ? 0 : Math.sin(t*6 + i)*.05;
+      if (u.spin > 0){ const s = Math.min(u.spin, dt*10); u.spin -= s; a.rotation.y += s; } else a.rotation.y = .4;
+      if (u.tick && !still) u.tick(t);
+      bubbleAt(i);
+    });
+    renderer.render(scene, cam);
+  }
+  frame();
+}
 </script>
 </body>
 </html>
