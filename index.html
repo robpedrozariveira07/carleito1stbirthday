@@ -143,8 +143,8 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
 .bookstage:focus-visible{outline:3px dashed #fff;outline-offset:4px}
 .bookstage{position:relative;overflow:hidden}
 .bookstage canvas{position:absolute;inset:0;display:block;width:100%!important;height:100%!important}
-.page-text{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-hand);font-size:clamp(20px,5.4vw,24px);line-height:1.3;
-  padding:12px 16px;border-radius:14px 18px 12px 20px;box-shadow:3px 4px 0 rgba(43,42,74,.15);min-height:3.9em;text-wrap:pretty}
+.page-text{position:absolute;left:0;top:0;width:0;height:0;margin:0;z-index:2;display:flex;align-items:center;justify-content:center;
+  text-align:center;color:var(--ink);font-family:var(--font-hand);font-size:18px;line-height:1.22;text-wrap:balance;pointer-events:none;overflow:hidden}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#1e3f66;font-weight:700;font-variant-numeric:tabular-nums}
 .pg{border:0;cursor:pointer;background:var(--paper);color:var(--ink);font-family:var(--font-round);font-weight:800;font-size:18px;
   min-width:48px;height:44px;padding:0 14px;border-radius:24px;box-shadow:2px 3px 0 rgba(43,42,74,.18)}
@@ -155,7 +155,6 @@ body.parading .wrap{padding-bottom:calc(165px + env(safe-area-inset-bottom,0px))
   padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
 .book.full .bookstage{flex:1;aspect-ratio:auto;min-height:0}
-.book.full .page-text{max-width:640px;width:100%;margin-inline:auto;box-sizing:border-box}
 .book.full .pager{max-width:640px;width:100%;margin-inline:auto}
 body.bookfull{overflow:hidden}
 .booktoggle{align-self:center;border:0;cursor:pointer;background:none;color:#fff;font-family:var(--font-round);font-weight:700;font-size:15px;
@@ -256,9 +255,11 @@ body.three.parading .wrap{padding-bottom:calc(225px + env(safe-area-inset-bottom
   <section id="player" hidden>
     <div class="now">Sonando para Carleito · Primer cumpleaños</div>
 
+    <div id="bookHome"></div>
     <div class="book" id="book">
-      <div class="bookstage" id="bookStage" role="button" tabindex="0" aria-label="Pasar a la siguiente página del cuento"></div>
-      <p class="page-text" id="pageText" aria-live="polite"></p>
+      <div class="bookstage" id="bookStage" role="button" tabindex="0" aria-label="Pasar a la siguiente página del cuento">
+        <p class="page-text" id="pageText" aria-live="polite"></p>
+      </div>
       <div class="pager">
         <button class="pg" id="prevP" aria-label="Página anterior">‹</button>
         <span id="pageNum">1 / 7</span>
@@ -603,6 +604,7 @@ const SCENES = [
 ];
 function setBookFull(on){
   const b = document.getElementById('book');
+  if (on) document.body.appendChild(b); else document.getElementById('bookHome').after(b);
   b.classList.toggle('full', on); document.body.classList.toggle('bookfull', on);
   document.getElementById('bookToggle').textContent = on ? 'Ver la carta completa y la canción ↓' : 'Ver el cuento en pantalla completa ⤢';
   window.dispatchEvent(new Event('resize'));
@@ -636,12 +638,12 @@ function startBook(){
   scene.add(lamp);
 
   const P = (c,r=.95) => new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:0});
-  const PW = 4.3, PD = 2.6;
+  const PW = 4.3, PD = 2.6, FD = 3.5;
   // tapa del libro (abajo) y hoja de abajo
-  const coverB = new THREE.Mesh(new THREE.BoxGeometry(PW+.3, .1, PD+.25), P(0xe8483f)); coverB.position.set(0,-.06,PD/2+.05); coverB.receiveShadow = true; scene.add(coverB);
+  const coverB = new THREE.Mesh(new THREE.BoxGeometry(PW+.3, .1, FD+.25), P(0xe8483f)); coverB.position.set(0,-.06,FD/2+.05); coverB.receiveShadow = true; scene.add(coverB);
   const floorTex = paperTex();
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(PW, PD), new THREE.MeshStandardMaterial({map:floorTex, roughness:1}));
-  floor.rotation.x = -Math.PI/2; floor.position.set(0,.001,PD/2); floor.receiveShadow = true; scene.add(floor);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(PW, FD), new THREE.MeshStandardMaterial({map:floorTex, roughness:1}));
+  floor.rotation.x = -Math.PI/2; floor.position.set(0,.001,FD/2); floor.receiveShadow = true; scene.add(floor);
   // hoja de atrás con su tapa: gira sobre el lomo
   const back = new THREE.Group(); scene.add(back);
   const coverT = new THREE.Mesh(new THREE.BoxGeometry(PW+.3, PD+.25, .1), P(0xe8483f)); coverT.position.set(0, PD/2+.05, -.06); coverT.castShadow = true; back.add(coverT);
@@ -695,7 +697,8 @@ function startBook(){
   }
   Object.keys(CUT).forEach(cutTex);
 
-  let page = 0, openP = 0, target = 1, pending = null, building = false, xs = 1;
+  let page = 0, openP = 0, target = 1, pending = null, building = false, typed = 0, fullText = '', typeAcc = 0;
+  const textEl = document.getElementById('pageText');
   async function build(i){
     building = true;
     const s = SCENES[i];
@@ -711,7 +714,7 @@ function startBook(){
       pivot.userData.k = k; pivot.userData.x0 = xPos; cuts.add(pivot);
     });
     backMat.map = skyTex(i); backMat.needsUpdate = true;
-    document.getElementById('pageText').textContent = s.text;
+    typed = 0; fullText = s.text; textEl.textContent = '';
     document.getElementById('pageNum').textContent = (i+1) + ' / ' + SCENES.length;
     document.getElementById('prevP').disabled = i === 0;
     document.getElementById('nextP').textContent = i === SCENES.length-1 ? 'Otra vez ↺' : 'Siguiente ›';
@@ -740,11 +743,19 @@ function startBook(){
   function resize(){
     const W = stage.clientWidth || 360, H = stage.clientHeight || 330;
     renderer.setSize(W, H, false); cam.aspect = W/H;
-    const tanV = Math.tan(36/2*Math.PI/180), portrait = cam.aspect < .9;
-    xs = portrait ? .6 : 1; back.scale.y = portrait ? 1.45 : 1;
-    const ty = portrait ? 1.35 : .9;
-    const d = Math.max(4.4, (1.3*xs + .95) / (tanV * cam.aspect));
-    cam.position.set(0, ty + d*.55, .75 + d*.83); cam.lookAt(0, ty, .75); cam.updateProjectionMatrix();
+    const portrait = cam.aspect < .9;
+    const dir = portrait ? new THREE.Vector3(0,.72,.69).normalize() : new THREE.Vector3(0,.58,.81).normalize();
+    const tgt = new THREE.Vector3(0, portrait ? 1.0 : .85, 1.45);
+    const lean = .16, pts = [];
+    [-1,1].forEach(sx => {
+      pts.push(new THREE.Vector3(sx*2.35,0,FD+.15), new THREE.Vector3(sx*2.35,0,0));
+      pts.push(new THREE.Vector3(sx*2.35,(PD+.15)*Math.cos(lean),-(PD+.15)*Math.sin(lean)));
+    });
+    let d = 3;
+    for (; d < 40; d += .1){
+      cam.position.copy(tgt).addScaledVector(dir, d); cam.lookAt(tgt); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+      if (pts.every(q => { const v = q.clone().project(cam); return Math.abs(v.x) < .97 && Math.abs(v.y) < .95; })) break;
+    }
   }
   addEventListener('resize', resize); resize();
 
@@ -771,12 +782,27 @@ function startBook(){
     back.rotation.x = (Math.PI/2 - .02) * (1 - e) + (-.16) * e;
     cuts.children.forEach(pv => {
       const k = pv.userData.k, lp = clamp((openP - .2 - k*.09) / .55);
-      pv.position.x = pv.userData.x0 * xs;
+      pv.position.x = pv.userData.x0;
       const up = back3(lp);
       pv.rotation.x = (Math.PI/2 - .035) * (1 - up) + (lp === 1 && !still ? Math.sin(t*2.2 + k)*.035 : 0);
       pv.rotation.z = lp === 1 && !still ? Math.sin(t*1.7 + k*1.3)*.03 : 0;
     });
+    placeText();
+    if (openP === 1 && typed < fullText.length){
+      if (still) typed = fullText.length;
+      else { typeAcc += dt*38; const n = Math.floor(typeAcc); if (n){ typed = Math.min(fullText.length, typed + n); typeAcc -= n; } }
+      textEl.textContent = fullText.slice(0, typed);
+    }
     renderer.render(scene, cam);
+  }
+  const pv3 = new THREE.Vector3();
+  function placeText(){
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const scr = (x,z) => { pv3.set(x,0,z).project(cam); return [(pv3.x+1)/2*W, (1-pv3.y)/2*H]; };
+    const a = scr(-1.95, 1.95), b = scr(1.95, 1.95), c = scr(-1.95, FD-.2);
+    const left = a[0], width = b[0]-a[0], top = a[1], height = Math.max(20, c[1]-a[1]);
+    Object.assign(textEl.style, {left:left+'px', top:top+'px', width:width+'px', height:height+'px',
+      fontSize: Math.max(13, Math.min(30, Math.min(height/4.1, width/19))) + 'px'});
   }
   frame();
 }
